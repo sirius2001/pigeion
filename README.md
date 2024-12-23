@@ -1,51 +1,58 @@
-# Kratos Project Template
+# Pigeon 工作流系统 CI/CD 项目
 
-## Install Kratos
-```
-go install github.com/go-kratos/kratos/cmd/kratos/v2@latest
-```
-## Create a service
-```
-# Create a template project
-kratos new server
+Pigeon 工作流系统是一个用于管理和自动化工单审批流程的项目，旨在简化企业内部的审批、任务分配与跟踪。该系统支持高度自定义的工作流配置，并提供可视化的表单设计功能，帮助用户快速构建和管理各类工单与审批流程。
 
-cd server
-# Add a proto template
-kratos proto add api/server/server.proto
-# Generate the proto code
-kratos proto client api/server/server.proto
-# Generate the source code of service by proto file
-kratos proto server api/server/server.proto -t internal/service
+## 项目特点
 
-go generate ./...
-go build -o ./bin/ ./...
-./bin/server -conf ./configs
-```
-## Generate other auxiliary files by Makefile
-```
-# Download and update dependencies
-make init
-# Generate API files (include: pb.go, http, grpc, validate, swagger) by proto file
-make api
-# Generate all files
-make all
-```
-## Automated Initialization (wire)
-```
-# install wire
-go get github.com/google/wire/cmd/wire
+- **可视化表单设计**：提供直观的拖拽式表单设计界面，用户可以自定义字段类型、布局等。
+- **灵活的工作流配置**：支持多种工单流转规则，如审批、分配、回退等。
+- **动态审批流程**：支持根据工单内容自动生成审批流程，用户可以设置审批人、审批方式、审批条件等。
+- **集成 CI/CD**：与 CI/CD 系统集成，自动化工单的创建、更新和通知。
+- **第三方系统对接**：支持与第三方系统的集成，提供 API 供第三方调用并处理工单状态。
 
-# generate wire
-cd cmd/server
-wire
-```
+## 功能概述
 
-## Docker
-```bash
-# build
-docker build -t <your-docker-image-name> .
+1. **工单创建与提交**：
+   - 用户可以通过系统或第三方接口提交工单申请。
+   - 支持多种工单类型，如请假申请、报销申请等。
+   
+2. **审批流程管理**：
+   - 配置不同类型的审批流程，包括多级审批、并行审批等。
+   - 支持审批人、审批条件、通知方式等灵活配置。
+   
+3. **可视化工作流**：
+   - 通过拖拽式设计工具，用户可以可视化设计工单流程。
+   - 系统会根据设计的流程自动触发审批。
 
-# run
-docker run --rm -p 8000:8000 -p 9000:9000 -v </path/to/your/configs>:/data/conf <your-docker-image-name>
-```
+4. **动态通知与回调**：
+   - 支持通过 HTTP 回调将工单状态通知到第三方系统。
+   - 通过系统配置，第三方可以对工单进行处理和拓展操作。
 
+5. **状态跟踪与管理**：
+   - 实时跟踪工单状态，支持暂停、恢复、取消等操作。
+   - 提供清晰的日志记录，便于排查和监控。
+
+## 技术栈
+
+- **后端**：Go (Kratos Framework)
+- **数据库**：MySQL、Redis
+- **消息队列**：Kafka
+- **工作流引擎**：自定义工作流引擎，基于状态机实现
+- **CI/CD 集成**：支持 GitLab CI、Jenkins 等
+
+## 快速开始
+
+### 环境要求
+
+- Go 1.18 或更高版本
+- MySQL 5.7 或更高版本
+- Redis 6.0 或更高版本
+- Kafka 2.0 或更高版本
+
+### 安装与配置
+
+1. **Clone 项目代码**
+
+   ```bash
+   git clone https://github.com/your-org/pigeon-workflow.git
+   cd pigeon-workflow
