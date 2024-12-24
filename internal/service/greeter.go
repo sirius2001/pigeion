@@ -27,3 +27,7 @@ func (s *GreeterService) SayHello(ctx context.Context, in *v1.HelloRequest) (*v1
 	}
 	return &v1.HelloReply{Message: "Hello " + g.Hello}, nil
 }
+
+func (s *GreeterService) SayBye(context.Context, *v1.HelloRequest) (*v1.HelloReply, error) {
+	return &v1.HelloReply{Message: "Bye "}, nil
+}

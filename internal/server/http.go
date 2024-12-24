@@ -1,32 +1,90 @@
 package server
 
 import (
-	v1 "pigeon2/api/helloworld/v1"
+	"context"
+	"net/http"
 	"pigeon2/internal/conf"
 	"pigeon2/internal/service"
 
+	"github.com/gin-gonic/gin"
 	"github.com/go-kratos/kratos/v2/log"
-	"github.com/go-kratos/kratos/v2/middleware/recovery"
-	"github.com/go-kratos/kratos/v2/transport/http"
 )
 
+type HTTPServer struct {
+	srv  *gin.Engine
+	addr string
+}
+
 // NewHTTPServer new an HTTP server.
-func NewHTTPServer(c *conf.Server, greeter *service.GreeterService, logger log.Logger) *http.Server {
-	var opts = []http.ServerOption{
-		http.Middleware(
-			recovery.Recovery(),
-		),
+func NewHTTPServer(c *conf.Server, greeter *service.GreeterService, wokerFlow *service.WorkFlowService, logger log.Logger) *HTTPServer {
+	srv := gin.Default()
+	g := srv.Group("/v1")
+	gr := g.Group("/greeter")
+	{
+		gr.GET("/sayHello", webHandler(greeter.SayHello))
+		gr.GET("/sayBye", webHandler(greeter.SayBye))
 	}
-	if c.Http.Network != "" {
-		opts = append(opts, http.Network(c.Http.Network))
+	return &HTTPServer{srv: srv, addr: c.Http.Addr}
+}
+
+// Start start the http server.
+func (s *HTTPServer) Start(ctx context.Context) error {
+	return s.srv.Run(s.addr)
+}
+
+// Stop stop the http server.
+func (s *HTTPServer) Stop(ctx context.Context) error {
+	return nil
+}
+
+func getJsonData(ctx *gin.Context, data any) error {
+	if ctx.Request.Method == "GET" {
+		if err := ctx.BindQuery(data); err != nil {
+			return err
+		}
+		return nil
 	}
-	if c.Http.Addr != "" {
-		opts = append(opts, http.Address(c.Http.Addr))
+
+	if ctx.Request.Method == "POST" || ctx.Request.Method == "PUT" {
+		if err := ctx.ShouldBindJSON(data); err != nil {
+			return err
+		}
 	}
-	if c.Http.Timeout != nil {
-		opts = append(opts, http.Timeout(c.Http.Timeout.AsDuration()))
+	return nil
+}
+
+func webHandler[T, R any](handler func(ctx context.Context, arg *T) (*R, error)) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		data := new(T)
+		if err := getJsonData(ctx, data); err != nil {
+			failed(ctx, http.StatusBadRequest, err)
+			return
+		}
+
+		// 调用处理函数
+		resp, err := handler(ctx.Request.Context(), data)
+		if err != nil {
+			failed(ctx, http.StatusInternalServerError, err)
+			return
+		}
+
+		// 返回 JSON 响应
+		success(ctx, resp)
 	}
-	srv := http.NewServer(opts...)
-	v1.RegisterGreeterHTTPServer(srv, greeter)
-	return srv
+}
+
+func success(ctx *gin.Context, data any) {
+	ctx.JSON(http.StatusOK, gin.H{
+		"code": http.StatusOK,
+		"msg":  "success",
+		"data": data,
+	})
+}
+
+func failed(ctx *gin.Context, code int, err error) {
+	ctx.JSON(http.StatusBadRequest, gin.H{
+		"code": code,
+		"msg":  err.Error(),
+		"data": nil,
+	})
 }

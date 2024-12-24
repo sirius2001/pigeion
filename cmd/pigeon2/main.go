@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"pigeon2/internal/conf"
+	"pigeon2/internal/server"
 
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/config"
@@ -12,7 +13,6 @@ import (
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware/tracing"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
-	"github.com/go-kratos/kratos/v2/transport/http"
 
 	_ "go.uber.org/automaxprocs"
 )
@@ -33,7 +33,7 @@ func init() {
 	flag.StringVar(&flagconf, "conf", "../../configs", "config path, eg: -conf config.yaml")
 }
 
-func newApp(logger log.Logger, gs *grpc.Server, hs *http.Server) *kratos.App {
+func newApp(logger log.Logger, gs *grpc.Server, hs *server.HTTPServer) *kratos.App {
 	return kratos.New(
 		kratos.ID(id),
 		kratos.Name(Name),
